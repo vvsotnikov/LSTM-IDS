@@ -1,11 +1,13 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import pickle
+import numpy as np
 
 
 def parse_dataset():
     # Default values.
-    train_set = 'UNSW_NB15_training-set.csv'
-    test_set = 'UNSW_NB15_testing-set.csv'
+    train_set = 'data/UNSW_NB15_training-set.csv'
+    test_set = 'data/UNSW_NB15_testing-set.csv'
     training = pd.read_csv(train_set, index_col='id')
     testing = pd.read_csv(test_set, index_col='id')
     # To encode string  labels into numbers
@@ -47,4 +49,18 @@ def parse_dataset():
     cols_to_normalise = list(training.columns.values)[:39]
     training[cols_to_normalise] = training[cols_to_normalise].apply(lambda x: (x - x.min()) / (x.max() - x.min()))
     testing[cols_to_normalise] = testing[cols_to_normalise].apply(lambda x: (x - x.min()) / (x.max() - x.min()))
-    return training, testing, le
+
+    classes = list(le.classes_)
+    training = training.to_numpy(dtype='float32')[:-237, :]
+    train_traffic = training[:, :-2]
+    train_labels = training[:, -1].astype(np.uint8)
+    train_classes = training[:, -2].astype(np.uint8)
+    testing = testing.to_numpy(dtype='float32')
+    test_traffic = testing[:, :-2]
+    test_labels = testing[:, -1].astype(np.uint8)
+    test_classes = testing[:, -2].astype(np.uint8)
+    return train_traffic, train_labels, train_classes, test_traffic, test_labels, test_classes, classes
+
+
+if __name__ == '__main__':
+    pickle.dump(parse_dataset(), open('data/dataset.bin', 'wb'))
